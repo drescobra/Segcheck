@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Segregation Check</title>
+<meta name="theme-color" content="#161A1D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SegCheck">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  --paper:#EFF1F0;
+  --card:#FFFFFF;
+  --ink:#161A1D;
+  --muted:#6A737B;
+  --line:#D5DAD9;
+  --line-2:#E6EAE9;
+  --stop:#B81D1D;
+  --caution:#C67A05;
+  --clear:#1C7A4E;
+  --unknown:#5A656D;
+  --focus:#1B5FA8;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --placard:'Barlow Condensed','IBM Plex Sans',sans-serif;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 64px;
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px;}
+
+/* ---------- header ---------- */
+.masthead{
+  border-bottom:1px solid var(--line);
+  background:var(--card);
+  padding:calc(18px + env(safe-area-inset-top)) 0 16px;
+  margin-bottom:20px;
+}
+.masthead h1{
+  font-family:var(--placard);
+  font-size:34px;
+  line-height:0.95;
+  letter-spacing:0.01em;
+  text-transform:uppercase;
+  margin:0;
+  font-weight:700;
+}
+.masthead p{
+  margin:6px 0 0;
+  font-family:var(--mono);
+  font-size:11.5px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* ---------- inputs ---------- */
+.slots{display:grid;grid-template-columns:1fr;gap:10px;}
+.slot{position:relative;}
+.slot label{
+  display:block;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:5px;
+}
+.slot input{
+  width:100%;
+  font-family:var(--sans);
+  font-size:17px;
+  font-weight:500;
+  padding:13px 40px 13px 13px;
+  border:1px solid var(--line);
+  border-radius:3px;
+  background:var(--card);
+  color:var(--ink);
+  appearance:none;
+}
+.slot input::placeholder{color:#9AA3A9;font-weight:400;}
+.slot input:focus-visible,
+button:focus-visible,
+.chip-btn:focus-visible,
+.opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+.clear-x{
+  position:absolute;right:6px;bottom:7px;
+  border:0;background:none;color:var(--muted);
+  font-size:20px;line-height:1;padding:6px 8px;cursor:pointer;border-radius:3px;
+}
+.clear-x:hover{color:var(--ink);}
+
+.menu{
+  position:absolute;z-index:30;left:0;right:0;top:100%;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-top:0;
+  max-height:260px;overflow-y:auto;
+  box-shadow:0 8px 20px rgba(20,26,30,0.10);
+}
+.opt{
+  display:block;width:100%;text-align:left;
+  border:0;border-bottom:1px solid var(--line-2);
+  background:none;padding:11px 13px;cursor:pointer;
+  font-family:var(--sans);font-size:15.5px;color:var(--ink);
+}
+.opt:last-child{border-bottom:0;}
+.opt:hover,.opt[aria-selected="true"]{background:#F3F6F5;}
+.opt .syn{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:1px;}
+.opt.miss{color:var(--muted);font-style:italic;}
+button.linkish{
+  border:0;background:none;padding:0;cursor:pointer;color:var(--focus);
+  font:inherit;font-style:normal;text-decoration:underline;
+}
+
+.rowtools{display:flex;gap:8px;margin:12px 0 22px;flex-wrap:wrap;}
+button.tool{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:0.07em;text-transform:uppercase;
+  padding:9px 12px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:3px;cursor:pointer;
+}
+button.tool:hover{border-color:var(--ink);}
+button.tool[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink);}
+
+/* ---------- manual class picker ---------- */
+.manual{
+  border:1px solid var(--line);background:var(--card);
+  padding:14px;margin-bottom:22px;border-radius:3px;
+}
+.manual h3{
+  margin:0 0 4px;font-family:var(--mono);font-size:11px;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:500;
+}
+.manual p{margin:0 0 12px;font-size:13.5px;color:var(--muted);}
+.manual .side{margin-bottom:14px;}
+.manual .side:last-child{margin-bottom:0;}
+.manual .side > span{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:0.08em;text-transform:uppercase;
+  display:block;margin-bottom:7px;
+}
+.chipset{display:flex;flex-wrap:wrap;gap:6px;}
+.chip-btn{
+  font-family:var(--sans);font-size:13px;padding:6px 10px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:99px;cursor:pointer;
+}
+.chip-btn[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink);}
+
+/* ---------- verdict slab (signature) ---------- */
+.slab{border-radius:3px;overflow:hidden;margin-bottom:16px;}
+.scheme{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-bottom:0;
+  padding:20px 16px 18px;
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;flex-wrap:wrap;
+}
+.reagent{
+  font-family:var(--sans);font-weight:600;font-size:16px;
+  padding:7px 12px;border:1.5px solid var(--ink);border-radius:2px;
+  max-width:190px;text-align:center;line-height:1.2;
+}
+.plus{font-family:var(--mono);font-size:17px;color:var(--muted);}
+.arrow{
+  display:flex;flex-direction:column;align-items:center;min-width:104px;
+}
+.arrow .over{
+  font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:0.02em;margin-bottom:2px;text-align:center;line-height:1.25;
+}
+.arrow svg{display:block;}
+.arrow .under{
+  font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  letter-spacing:0.06em;text-transform:uppercase;margin-top:3px;
+}
+.banner{
+  padding:14px 16px;color:#fff;
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+}
+.banner .word{
+  font-family:var(--placard);font-size:32px;line-height:1;
+  text-transform:uppercase;letter-spacing:0.02em;font-weight:700;
+}
+.banner .code{
+  font-family:var(--mono);font-size:11px;letter-spacing:0.1em;
+  text-transform:uppercase;opacity:0.85;white-space:nowrap;
+}
+.sev-3 .banner{background:var(--stop);}
+.sev-2 .banner{background:var(--caution);}
+.sev-1 .banner{background:var(--clear);}
+.sev-0 .banner{background:var(--unknown);}
+.sev-3 .reagent{border-color:var(--stop);}
+.sev-2 .reagent{border-color:var(--caution);}
+.sev-1 .reagent{border-color:var(--clear);}
+.sev-3 .arrow .over{color:var(--stop);}
+.sev-2 .arrow .over{color:var(--caution);}
+
+/* ---------- findings ---------- */
+.block{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:16px;margin-bottom:14px;}
+.block > h2{
+  margin:0 0 12px;font-family:var(--mono);font-size:11px;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:500;
+}
+.finding{border-left:3px solid var(--line);padding:0 0 0 12px;margin-bottom:16px;}
+.finding:last-child{margin-bottom:0;}
+.finding.s3{border-left-color:var(--stop);}
+.finding.s2{border-left-color:var(--caution);}
+.finding.s1{border-left-color:var(--clear);}
+.finding h3{
+  margin:0 0 3px;font-size:15.5px;font-weight:600;line-height:1.3;
+}
+.finding p{margin:0;font-size:14.5px;color:#3D464C;}
+.finding .tagline{
+  display:inline-block;margin-top:6px;
+  font-family:var(--mono);font-size:11px;letter-spacing:0.06em;
+  color:var(--muted);text-transform:uppercase;
+}
+ul.store{margin:0;padding:0;list-style:none;}
+ul.store li{
+  font-size:14.5px;padding:9px 0;border-bottom:1px solid var(--line-2);
+  display:grid;grid-template-columns:1fr;gap:2px;
+}
+ul.store li:last-child{border-bottom:0;padding-bottom:0;}
+ul.store li strong{font-weight:600;}
+ul.store li span{color:#3D464C;}
+.classes{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.tag{
+  font-family:var(--mono);font-size:11px;padding:3px 7px;
+  border:1px solid var(--line);border-radius:2px;color:var(--muted);
+}
+
+/* ---------- also separate from ---------- */
+.block > h2 .count{
+  float:right;font-family:var(--mono);font-size:11px;
+  letter-spacing:0.06em;color:var(--muted);text-transform:none;
+}
+.cgroup{border-left:3px solid var(--line);padding-left:12px;margin-bottom:15px;}
+.cgroup:last-child{margin-bottom:0;}
+.cgroup.s3{border-left-color:var(--stop);}
+.cgroup.s2{border-left-color:var(--caution);}
+.cgroup h3{margin:0 0 3px;font-size:14.5px;font-weight:600;line-height:1.3;}
+.cgroup h3 em{
+  font-style:normal;font-family:var(--mono);font-size:11px;
+  color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;white-space:nowrap;
+}
+.cgroup .names{margin:0;font-size:14.5px;color:#3D464C;line-height:1.5;}
+button.more{
+  border:0;background:none;color:var(--focus);cursor:pointer;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:0.06em;
+  text-transform:uppercase;padding:2px 0 2px 4px;
+}
+button.more:hover{text-decoration:underline;}
+.solo{
+  background:var(--card);border:1px solid var(--line);border-radius:3px;
+  padding:16px;margin-bottom:14px;
+}
+.solo-name{font-family:var(--placard);font-size:26px;text-transform:uppercase;line-height:1;font-weight:700;}
+.solo .classes{margin-top:9px;}
+
+/* ---------- log ---------- */
+.log li{
+  font-size:14px;padding:8px 0;border-bottom:1px solid var(--line-2);
+  display:flex;gap:8px;align-items:baseline;
+}
+.log li:last-child{border-bottom:0;}
+.log .dot{width:8px;height:8px;border-radius:99px;flex:0 0 8px;}
+.log .d3{background:var(--stop);} .log .d2{background:var(--caution);}
+.log .d1{background:var(--clear);} .log .d0{background:var(--unknown);}
+ul.log{list-style:none;margin:0;padding:0;}
+
+.empty{
+  border:1px dashed var(--line);border-radius:3px;
+  padding:28px 18px;text-align:center;color:var(--muted);font-size:15px;background:var(--card);
+}
+.foot{
+  margin-top:22px;font-size:12.5px;color:var(--muted);line-height:1.5;
+  border-top:1px solid var(--line);padding-top:12px;
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+
+@media (min-width:560px){
+  .slots{grid-template-columns:1fr 1fr;gap:14px;}
+  .masthead h1{font-size:40px;}
+  .banner .word{font-size:38px;}
+}
+@media (prefers-reduced-motion:no-preference){
+  .slab{animation:rise 160ms ease-out;}
+  @keyframes rise{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <h1>Segregation Check</h1>
+    <p>Two-chemical incompatibility lookup</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="slots">
+    <div class="slot" id="slotA">
+      <label for="inA">Chemical A</label>
+      <input id="inA" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. nitric acid">
+      <button class="clear-x" data-clear="A" aria-label="Clear chemical A" hidden>&times;</button>
+      <div class="menu" id="menuA" role="listbox" hidden></div>
+    </div>
+    <div class="slot" id="slotB">
+      <label for="inB">Chemical B <span style="text-transform:none;letter-spacing:0;">(optional)</span></label>
+      <input id="inB" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. acetone">
+      <button class="clear-x" data-clear="B" aria-label="Clear chemical B" hidden>&times;</button>
+      <div class="menu" id="menuB" role="listbox" hidden></div>
+    </div>
+  </div>
+
+  <div class="rowtools">
+    <button class="tool" id="swap">Swap</button>
+    <button class="tool" id="manualToggle" aria-pressed="false">Set classes manually</button>
+    <button class="tool" id="copyNote" hidden>Copy note</button>
+  </div>
+
+  <section class="manual" id="manual" hidden>
+    <h3>Manual hazard classes</h3>
+    <p>Use this when a material isn't in the list. Tap every class that applies to each side.</p>
+    <div class="side" data-side="A"><span>Side A classes</span><div class="chipset" id="chipsA"></div></div>
+    <div class="side" data-side="B"><span>Side B classes</span><div class="chipset" id="chipsB"></div></div>
+  </section>
+
+  <div id="result"></div>
+
+  <section class="block" id="logBlock" hidden>
+    <h2>Checked this session</h2>
+    <ul class="log" id="log"></ul>
+  </section>
+
+  <p class="foot">Screening aid built on reactive-class logic — it flags the pairing, it doesn't replace the SDS. Confirm concentration, quantity, container, and secondary containment before you write the finding.</p>
+</main>
+
+<script>
+/* ============================================================
+   Segregation Check — DATA
+   ------------------------------------------------------------
+   This file holds everything the tool knows. Editing it is safe:
+   nothing here is program logic. See README.md for recipes.
+   Bump DATA_VERSION whenever you change anything below.
+   ============================================================ */
+const DATA_VERSION = "2026-08-19";
+/* ============================================================
+   HAZARD CLASSES
+   ============================================================ */
+const G = {
+  acid_ox:     {label:"Oxidizing acid",     store:"Acid cabinet, segregated from organics and organic acids; perchloric acid needs a dedicated washdown hood."},
+  acid_min:    {label:"Mineral acid",       store:"Corrosives (acid) cabinet, below eye level, in secondary containment."},
+  acid_org:    {label:"Organic acid",       store:"Corrosives cabinet, separated from oxidizing acids; many are also combustible."},
+  base_strong: {label:"Caustic base",       store:"Corrosives (base) cabinet or a separate tray from acids."},
+  base_org:    {label:"Amine / organic base", store:"Flammables cabinet if flammable; away from acids and oxidizers."},
+  ox:          {label:"Oxidizer",           store:"Dedicated oxidizer cabinet or shelf, away from all combustibles and reducers."},
+  red:         {label:"Reducing agent",     store:"Dry, away from oxidizers and acids."},
+  water_react: {label:"Water-reactive",     store:"Dry, sealed, away from sinks, safety showers, and aqueous waste."},
+  alkali_metal:{label:"Alkali / active metal", store:"Under mineral oil or inert gas, in a dry cabinet away from water and halogenated solvents."},
+  pyro:        {label:"Pyrophoric",         store:"Inert atmosphere, dedicated storage, away from all combustibles and oxidizers."},
+  flam_org:    {label:"Flammable organic",  store:"Flammables cabinet; quantity per fire code limits."},
+  halo_solv:   {label:"Halogenated solvent", store:"Flammables or solvent cabinet; segregate from alkali metals and strong bases."},
+  ether_perox: {label:"Peroxide former",    store:"Flammables cabinet, dated on receipt and opening, tested on schedule."},
+  cyanide:     {label:"Cyanide salt",       store:"Locked, dry, well away from any acid and away from acid waste."},
+  sulfide:     {label:"Sulfide salt",       store:"Dry, sealed, away from acids."},
+  azide:       {label:"Azide",              store:"Away from acids and heavy metals; never down a metal drain line."},
+  halogen:     {label:"Halogen",            store:"Ventilated corrosive storage, away from organics, metals, and ammonia."},
+  ammonia:     {label:"Ammonia / ammonium", store:"Away from oxidizers, hypochlorite, and halogens; ventilated."},
+  carbonate:   {label:"Carbonate / bicarbonate", store:"Ordinary shelf storage; keep out of acid waste containers, which it pressurizes."},
+  metal_salt:  {label:"Heavy-metal salt",   store:"Dry, segregated, with heavy-metal waste stream identified."},
+  shock:       {label:"Shock-sensitive",    store:"Kept wetted or as specified, dated, quantity-limited, on a tracked inventory."},
+  gas_flam:    {label:"Flammable gas",      store:"Secured upright cylinder, 20 ft from oxidizing gases or behind a half-hour fire barrier."},
+  gas_ox:      {label:"Oxidizing gas",      store:"Secured upright cylinder, 20 ft from flammable gases or behind a half-hour fire barrier."},
+  gas_tox:     {label:"Toxic gas",          store:"Ventilated gas cabinet with monitoring as required."},
+  gas_inert:   {label:"Inert gas",          store:"Secured upright cylinder; asphyxiation risk in confined space."},
+  water:       {label:"Water / aqueous",    store:"—"},
+  low:         {label:"No reactive class",  store:"Ordinary shelf storage. Segregation here is driven by toxicity, container, and housekeeping — not reactivity."}
+};
+
+/* ============================================================
+   CHEMICAL LIST  ( n=name, s=synonyms, g=classes )
+   ============================================================ */
+const CHEMS = [
+ {n:"Nitric acid", s:["HNO3"], g:["acid_ox","acid_min"]},
+ {n:"Perchloric acid", s:["HClO4"], g:["acid_ox","acid_min","ox"]},
+ {n:"Sulfuric acid (concentrated)", s:["H2SO4","oil of vitriol"], g:["acid_ox","acid_min"]},
+ {n:"Chromic acid", s:["chromium trioxide","CrO3","chromerge"], g:["acid_ox","ox","metal_salt"]},
+ {n:"Hydrochloric acid", s:["HCl","muriatic acid"], g:["acid_min"]},
+ {n:"Hydrobromic acid", s:["HBr"], g:["acid_min"]},
+ {n:"Hydrofluoric acid", s:["HF"], g:["acid_min"]},
+ {n:"Phosphoric acid", s:["H3PO4"], g:["acid_min"]},
+ {n:"Acetic acid (glacial)", s:["ethanoic acid"], g:["acid_org","flam_org"]},
+ {n:"Formic acid", s:[], g:["acid_org"]},
+ {n:"Trifluoroacetic acid", s:["TFA"], g:["acid_org","acid_min"]},
+ {n:"Trichloroacetic acid", s:["TCA"], g:["acid_org"]},
+ {n:"Citric acid", s:[], g:["acid_org"]},
+ {n:"Picric acid", s:["2,4,6-trinitrophenol"], g:["shock","acid_org","ox"]},
+ {n:"Acetic anhydride", s:[], g:["acid_org","water_react","flam_org"]},
+
+ {n:"Sodium hydroxide", s:["NaOH","lye","caustic soda"], g:["base_strong"]},
+ {n:"Potassium hydroxide", s:["KOH","caustic potash"], g:["base_strong"]},
+ {n:"Ammonium hydroxide", s:["ammonia solution","aqueous ammonia","NH4OH"], g:["base_strong","ammonia"]},
+ {n:"Calcium hydroxide", s:["slaked lime"], g:["base_strong"]},
+ {n:"Triethylamine", s:["TEA"], g:["base_org","flam_org"]},
+ {n:"Pyridine", s:[], g:["base_org","flam_org"]},
+ {n:"Aniline", s:["aminobenzene"], g:["base_org","red"]},
+ {n:"Ethylenediamine", s:["EDA"], g:["base_org","flam_org"]},
+ {n:"Hydrazine", s:["N2H4"], g:["red","base_org","flam_org"]},
+
+ {n:"Hydrogen peroxide", s:["H2O2"], g:["ox"]},
+ {n:"Sodium hypochlorite (bleach)", s:["bleach","NaOCl","clorox"], g:["ox"]},
+ {n:"Calcium hypochlorite", s:["HTH","pool chlorine"], g:["ox"]},
+ {n:"Potassium permanganate", s:["KMnO4"], g:["ox","metal_salt"]},
+ {n:"Potassium dichromate", s:["K2Cr2O7"], g:["ox","metal_salt"]},
+ {n:"Sodium dichromate", s:[], g:["ox","metal_salt"]},
+ {n:"Potassium chlorate", s:["KClO3"], g:["ox"]},
+ {n:"Sodium chlorate", s:[], g:["ox"]},
+ {n:"Potassium perchlorate", s:[], g:["ox"]},
+ {n:"Ammonium persulfate", s:["APS"], g:["ox","ammonia"]},
+ {n:"Sodium persulfate", s:[], g:["ox"]},
+ {n:"Potassium nitrate", s:["saltpeter","KNO3"], g:["ox"]},
+ {n:"Ammonium nitrate", s:["NH4NO3"], g:["ox","ammonia","shock"]},
+ {n:"Silver nitrate", s:["AgNO3"], g:["ox","metal_salt"]},
+ {n:"Benzoyl peroxide", s:["BPO"], g:["ox","shock"]},
+ {n:"Peracetic acid", s:["peroxyacetic acid"], g:["ox","acid_org"]},
+ {n:"Osmium tetroxide", s:["OsO4"], g:["ox","metal_salt"]},
+ {n:"Iodine", s:["I2"], g:["ox","halogen"]},
+ {n:"Bromine", s:["Br2"], g:["ox","halogen","acid_min"]},
+ {n:"Chlorine", s:["Cl2"], g:["ox","halogen","gas_ox","gas_tox"]},
+ {n:"Nitrous oxide", s:["N2O"], g:["gas_ox"]},
+ {n:"Oxygen (cylinder)", s:["O2"], g:["gas_ox","ox"]},
+
+ {n:"Sodium borohydride", s:["NaBH4"], g:["red","water_react"]},
+ {n:"Lithium aluminum hydride", s:["LAH","LiAlH4"], g:["red","water_react","pyro"]},
+ {n:"Calcium hydride", s:["CaH2"], g:["red","water_react"]},
+ {n:"Sodium sulfite", s:[], g:["red"]},
+ {n:"Sodium bisulfite", s:[], g:["red"]},
+ {n:"Sodium thiosulfate", s:["hypo"], g:["red"]},
+ {n:"Sodium metabisulfite", s:[], g:["red"]},
+ {n:"Oxalic acid", s:[], g:["red","acid_org"]},
+ {n:"Formaldehyde solution", s:["formalin"], g:["red","flam_org"]},
+ {n:"Paraformaldehyde", s:["PFA"], g:["red","flam_org"]},
+ {n:"Glutaraldehyde", s:[], g:["red"]},
+ {n:"Dithiothreitol", s:["DTT"], g:["red","sulfide"]},
+ {n:"2-Mercaptoethanol", s:["BME","beta-mercaptoethanol"], g:["red","sulfide","flam_org"]},
+
+ {n:"Sodium metal", s:["Na"], g:["alkali_metal","water_react","red"]},
+ {n:"Potassium metal", s:["K"], g:["alkali_metal","water_react","red"]},
+ {n:"Lithium metal", s:["Li"], g:["alkali_metal","water_react","red"]},
+ {n:"Magnesium (turnings/powder)", s:["Mg"], g:["alkali_metal","red"]},
+ {n:"Aluminum powder", s:["Al"], g:["alkali_metal","red"]},
+ {n:"Zinc powder", s:["Zn"], g:["alkali_metal","red"]},
+ {n:"n-Butyllithium", s:["nBuLi","butyllithium"], g:["pyro","water_react","flam_org","red"]},
+ {n:"tert-Butyllithium", s:["tBuLi"], g:["pyro","water_react","flam_org","red"]},
+ {n:"Trimethylaluminum", s:["TMA"], g:["pyro","water_react"]},
+ {n:"Raney nickel", s:[], g:["pyro","red","metal_salt"]},
+ {n:"White phosphorus", s:["P4"], g:["pyro","water_react"]},
+ {n:"Thionyl chloride", s:["SOCl2"], g:["water_react","acid_min"]},
+ {n:"Acetyl chloride", s:[], g:["water_react","acid_min","flam_org"]},
+ {n:"Phosphorus pentoxide", s:["P2O5"], g:["water_react"]},
+ {n:"Calcium carbide", s:["CaC2"], g:["water_react"]},
+ {n:"Trimethylsilyl chloride", s:["TMSCl"], g:["water_react","flam_org","acid_min"]},
+
+ {n:"Acetone", s:[], g:["flam_org"]},
+ {n:"Methanol", s:["methyl alcohol"], g:["flam_org"]},
+ {n:"Ethanol", s:["ethyl alcohol","EtOH"], g:["flam_org"]},
+ {n:"Isopropanol", s:["IPA","isopropyl alcohol","2-propanol"], g:["flam_org"]},
+ {n:"n-Butanol", s:[], g:["flam_org"]},
+ {n:"Glycerol", s:["glycerin"], g:["flam_org","red"]},
+ {n:"Ethylene glycol", s:[], g:["flam_org"]},
+ {n:"Hexane", s:["n-hexane"], g:["flam_org"]},
+ {n:"Heptane", s:[], g:["flam_org"]},
+ {n:"Pentane", s:[], g:["flam_org"]},
+ {n:"Toluene", s:[], g:["flam_org"]},
+ {n:"Xylene", s:[], g:["flam_org"]},
+ {n:"Benzene", s:[], g:["flam_org"]},
+ {n:"Ethyl acetate", s:[], g:["flam_org"]},
+ {n:"Acetonitrile", s:["ACN","MeCN"], g:["flam_org"]},
+ {n:"Dimethyl sulfoxide", s:["DMSO"], g:["flam_org","red"]},
+ {n:"Dimethylformamide", s:["DMF"], g:["flam_org"]},
+ {n:"Pyrogallol", s:[], g:["flam_org","red"]},
+ {n:"Mineral oil", s:[], g:["flam_org"]},
+ {n:"Paper / cellulose / sawdust", s:["cellulose","paper","wood","sawdust","kimwipes"], g:["flam_org"]},
+
+ {n:"Diethyl ether", s:["ether","Et2O"], g:["ether_perox","flam_org"]},
+ {n:"Tetrahydrofuran", s:["THF"], g:["ether_perox","flam_org"]},
+ {n:"1,4-Dioxane", s:["dioxane"], g:["ether_perox","flam_org"]},
+ {n:"Diisopropyl ether", s:["isopropyl ether","DIPE"], g:["ether_perox","flam_org"]},
+ {n:"2-Methoxyethanol", s:[], g:["ether_perox","flam_org"]},
+ {n:"Cyclohexene", s:[], g:["ether_perox","flam_org"]},
+
+ {n:"Dichloromethane", s:["DCM","methylene chloride"], g:["halo_solv"]},
+ {n:"Chloroform", s:["trichloromethane","CHCl3"], g:["halo_solv"]},
+ {n:"Carbon tetrachloride", s:["CCl4"], g:["halo_solv"]},
+ {n:"Trichloroethylene", s:["TCE"], g:["halo_solv"]},
+ {n:"Chlorobenzene", s:[], g:["halo_solv","flam_org"]},
+ {n:"Phenol-chloroform reagent", s:["TRIzol","phenol chloroform"], g:["halo_solv","acid_org"]},
+
+ {n:"Sodium cyanide", s:["NaCN"], g:["cyanide"]},
+ {n:"Potassium cyanide", s:["KCN"], g:["cyanide"]},
+ {n:"Potassium ferricyanide", s:[], g:["cyanide","ox","metal_salt"]},
+ {n:"Sodium sulfide", s:["Na2S"], g:["sulfide","base_strong"]},
+ {n:"Sodium azide", s:["NaN3"], g:["azide"]},
+ {n:"Hydrogen sulfide", s:["H2S"], g:["sulfide","gas_tox","gas_flam","red"]},
+
+ {n:"Mercury (elemental)", s:["Hg"], g:["metal_salt"]},
+ {n:"Mercuric chloride", s:[], g:["metal_salt","ox"]},
+ {n:"Lead acetate", s:[], g:["metal_salt"]},
+ {n:"Lead nitrate", s:[], g:["metal_salt","ox"]},
+ {n:"Copper sulfate", s:["CuSO4"], g:["metal_salt"]},
+ {n:"Copper metal / brass", s:["copper","brass","bronze"], g:["metal_salt"]},
+ {n:"Silver salts", s:["silver"], g:["metal_salt"]},
+ {n:"Cadmium chloride", s:[], g:["metal_salt"]},
+ {n:"Ferric chloride", s:["iron(III) chloride"], g:["metal_salt","acid_min"]},
+
+ {n:"Hydrogen (cylinder)", s:["H2"], g:["gas_flam","red"]},
+ {n:"Acetylene", s:["C2H2"], g:["gas_flam"]},
+ {n:"Methane / natural gas", s:["methane","CH4"], g:["gas_flam"]},
+ {n:"Propane", s:[], g:["gas_flam"]},
+ {n:"Ammonia (anhydrous)", s:["NH3 gas"], g:["ammonia","gas_flam","gas_tox","base_strong"]},
+ {n:"Carbon monoxide", s:["CO"], g:["gas_flam","gas_tox","red"]},
+ {n:"Nitrogen (cylinder)", s:["N2"], g:["gas_inert"]},
+ {n:"Argon (cylinder)", s:["Ar"], g:["gas_inert"]},
+ {n:"Carbon dioxide (cylinder)", s:["CO2","dry ice"], g:["gas_inert"]},
+
+ {n:"Ammonium chloride", s:[], g:["ammonia"]},
+ {n:"Ammonium sulfate", s:[], g:["ammonia"]},
+ {n:"Water", s:["H2O","DI water","deionized water"], g:["water"]},
+ {n:"Ethidium bromide", s:["EtBr"], g:["low"]},
+ {n:"Agarose", s:[], g:["low"]},
+ {n:"Sodium chloride", s:["NaCl","saline"], g:["low"]},
+ {n:"Tris buffer", s:["Tris"], g:["base_org"]},
+ {n:"Phosphate-buffered saline", s:["PBS"], g:["water"]},
+ {n:"Magnesium chloride", s:["MgCl2"], g:["low"]},
+ {n:"Calcium chloride", s:["CaCl2"], g:["low"]},
+ {n:"Potassium chloride", s:["KCl"], g:["low"]},
+ {n:"Magnesium sulfate", s:["MgSO4","Epsom salt"], g:["low"]},
+ {n:"Sodium sulfate", s:["Na2SO4"], g:["low"]},
+ {n:"Zinc chloride", s:["ZnCl2"], g:["metal_salt"]},
+ {n:"Nickel chloride", s:["NiCl2"], g:["metal_salt"]},
+ {n:"Cobalt chloride", s:["CoCl2"], g:["metal_salt"]},
+ {n:"Barium chloride", s:["BaCl2"], g:["metal_salt"]},
+ {n:"Ammonium molybdate", s:[], g:["metal_salt","ammonia"]},
+ {n:"Potassium ferrocyanide", s:[], g:["cyanide","metal_salt"]},
+ {n:"Sodium fluoride", s:["NaF"], g:["low"]},
+ {n:"Sodium acetate", s:["NaOAc"], g:["low"]},
+ {n:"Ammonium acetate", s:[], g:["ammonia"]},
+ {n:"Ammonium bicarbonate", s:[], g:["ammonia","carbonate"]},
+ {n:"Potassium carbonate", s:["K2CO3"], g:["carbonate","base_strong"]},
+ {n:"Sodium phosphate", s:["Na2HPO4","monosodium phosphate"], g:["low"]},
+ {n:"Potassium phosphate", s:["K2HPO4","KH2PO4"], g:["low"]},
+ {n:"Boric acid", s:["H3BO3"], g:["low"]},
+ {n:"Sodium borate", s:["borax"], g:["low"]},
+ {n:"HEPES", s:[], g:["low"]},
+ {n:"Glycine", s:[], g:["low"]},
+ {n:"EDTA", s:["disodium EDTA","edetate"], g:["low"]},
+ {n:"Sodium citrate", s:[], g:["low"]},
+ {n:"Urea", s:[], g:["low"]},
+ {n:"Guanidine hydrochloride", s:["GuHCl","guanidinium chloride"], g:["low"]},
+ {n:"Guanidinium thiocyanate", s:["GITC","guanidine thiocyanate"], g:["cyanide"]},
+ {n:"Sucrose", s:["table sugar"], g:["flam_org"]},
+ {n:"Glucose", s:["dextrose"], g:["flam_org"]},
+ {n:"Sodium dodecyl sulfate", s:["SDS","lauryl sulfate"], g:["flam_org"]},
+ {n:"Triton X-100", s:[], g:["low"]},
+ {n:"Tween 20", s:["polysorbate 20"], g:["low"]},
+ {n:"Polyethylene glycol", s:["PEG"], g:["low"]},
+ {n:"Formamide", s:[], g:["low"]},
+ {n:"Diethyl pyrocarbonate", s:["DEPC"], g:["flam_org","water_react"]},
+ {n:"Acrylamide", s:["bis-acrylamide","polyacrylamide"], g:["low"]},
+ {n:"TEMED", s:["tetramethylethylenediamine"], g:["base_org","flam_org"]},
+ {n:"IPTG", s:[], g:["low"]},
+ {n:"Methylene blue", s:[], g:["low"]},
+ {n:"Phenol", s:["carbolic acid"], g:["acid_org"]},
+ {n:"Sodium nitrite", s:["NaNO2"], g:["ox"]},
+ {n:"Potassium iodide", s:["KI"], g:["red"]},
+ {n:"Sodium dithionite", s:["sodium hydrosulfite"], g:["red","water_react"]},
+ {n:"Hydroxylamine", s:["NH2OH"], g:["red"]},
+ {n:"Sodium hydride", s:["NaH"], g:["red","water_react"]},
+ {n:"Potassium tert-butoxide", s:["KOtBu"], g:["base_strong","water_react","flam_org"]},
+ {n:"Boron trifluoride etherate", s:["BF3 etherate"], g:["water_react","acid_min","flam_org"]},
+ {n:"Sodium periodate", s:["NaIO4"], g:["ox"]},
+ {n:"Potassium persulfate", s:[], g:["ox"]},
+ {n:"Methyl ethyl ketone", s:["MEK","2-butanone"], g:["flam_org"]},
+ {n:"Cyclohexane", s:[], g:["flam_org"]},
+ {n:"Petroleum ether", s:["ligroin"], g:["flam_org"]},
+ {n:"Diethylamine", s:[], g:["base_org","flam_org"]},
+ {n:"Isoamyl alcohol", s:["3-methyl-1-butanol"], g:["flam_org"]},
+ {n:"Isoflurane", s:[], g:["halo_solv"]},
+ {n:"Liquid nitrogen", s:["LN2"], g:["gas_inert"]},
+ {n:"Liquid helium", s:[], g:["gas_inert"]},
+ {n:"Sodium bicarbonate", s:["baking soda","NaHCO3"], g:["carbonate"]},
+ {n:"Sodium carbonate", s:["soda ash","Na2CO3"], g:["carbonate","base_strong"]}
+];
+
+/* ============================================================
+   CLASS-PAIR RULES   sev: 3 = separate, 2 = caution, 1 = note
+   ============================================================ */
+const RULES = [
+ {a:"ox",b:"flam_org",sev:3,p:"fire",t:"Oxidizer with combustible organic",
+  w:"An oxidizer supplies its own oxygen. Contact with solvent, paper, or absorbent can ignite without an external source, and a spill onto shared secondary containment is enough."},
+ {a:"ox",b:"ether_perox",sev:3,p:"fire",t:"Oxidizer with peroxide-forming solvent",
+  w:"Same fire risk as any flammable, plus the ether's own peroxide burden."},
+ {a:"ox",b:"red",sev:3,p:"runaway",t:"Oxidizer with reducing agent",
+  w:"A complete redox pair. Reaction is exothermic and can accelerate on its own once started."},
+ {a:"ox",b:"halo_solv",sev:2,p:"exotherm",t:"Oxidizer with halogenated solvent",
+  w:"Less energetic than with a flammable, but strong oxidizers still attack halogenated solvents and can generate phosgene or other decomposition gases."},
+ {a:"ox",b:"acid_min",sev:3,p:"toxic gas",t:"Oxidizer salt with acid",
+  w:"Acid liberates the free oxidizing acid from hypochlorite, chlorate, or permanganate salts, giving chlorine, chlorine dioxide, or a strong oxidizer in solution."},
+ {a:"ox",b:"acid_org",sev:3,p:"runaway",t:"Oxidizer with organic acid",
+  w:"The acid is both a proton source and a fuel."},
+ {a:"ox",b:"ammonia",sev:3,p:"NCl₃ / NH₂Cl",t:"Oxidizer with ammonia or ammonium salt",
+  w:"Hypochlorite and ammonia give chloramines; concentrated conditions give nitrogen trichloride, which is explosive."},
+ {a:"ox",b:"cyanide",sev:3,p:"toxic gas",t:"Oxidizer with cyanide",
+  w:"Violent oxidation of cyanide with release of cyanogen or HCN."},
+ {a:"ox",b:"sulfide",sev:3,p:"SO₂ / S",t:"Oxidizer with sulfide or thiol",
+  w:"Rapid exothermic oxidation of sulfur; sulfur dioxide and elemental sulfur are typical products."},
+ {a:"ox",b:"alkali_metal",sev:3,p:"ignition",t:"Oxidizer with active metal",
+  w:"Metal powders and alkali metals ignite or detonate with solid oxidizers, especially on grinding or impact."},
+ {a:"ox",b:"pyro",sev:3,p:"ignition",t:"Oxidizer with pyrophoric",
+  w:"Immediate ignition. These never share a cabinet."},
+ {a:"ox",b:"base_org",sev:2,p:"exotherm",t:"Oxidizer with amine",
+  w:"Amines are oxidizable fuels; hypochlorite plus amine also gives chloramines."},
+ {a:"ox",b:"metal_salt",sev:2,p:"catalytic decomposition",t:"Oxidizer with transition-metal salt",
+  w:"Iron, copper, and manganese ions catalyze peroxide decomposition — pressure build-up in a closed container."},
+
+ {a:"acid_ox",b:"flam_org",sev:3,p:"ignition / nitration",t:"Oxidizing acid with organic",
+  w:"Nitric and perchloric acids attack organics directly. Perchloric acid plus alcohol or cellulose forms explosive perchlorate esters."},
+ {a:"acid_ox",b:"ether_perox",sev:3,p:"explosion",t:"Oxidizing acid with ether",
+  w:"Nitric or perchloric acid with an ether is a classic detonation pair."},
+ {a:"acid_ox",b:"acid_org",sev:3,p:"explosion",t:"Oxidizing acid with organic acid",
+  w:"Nitric acid with acetic acid or acetic anhydride is a well-documented explosive combination."},
+ {a:"acid_ox",b:"red",sev:3,p:"runaway",t:"Oxidizing acid with reducing agent",
+  w:"Vigorous redox with heat and gas evolution."},
+ {a:"acid_ox",b:"halo_solv",sev:2,p:"exotherm",t:"Oxidizing acid with halogenated solvent",
+  w:"Concentrated nitric or sulfuric acid reacts with chlorinated solvents; keep waste streams separate."},
+ {a:"acid_ox",b:"acid_min",sev:2,p:"Cl₂ / NOCl",t:"Oxidizing acid with mineral acid",
+  w:"Nitric plus hydrochloric gives aqua regia — nitrosyl chloride and chlorine, and it pressurizes closed containers."},
+ {a:"acid_ox",b:"base_strong",sev:3,p:"violent exotherm",t:"Concentrated acid with caustic",
+  w:"Neutralization heat is enough to boil and spatter both."},
+ {a:"acid_ox",b:"base_org",sev:3,p:"violent exotherm",t:"Oxidizing acid with amine",
+  w:"Exothermic neutralization plus oxidation of the amine."},
+ {a:"acid_ox",b:"metal_salt",sev:2,p:"NOx",t:"Oxidizing acid with metal or metal salt",
+  w:"Nitric acid dissolves most metals with nitrogen oxide evolution."},
+
+ {a:"acid_min",b:"base_strong",sev:3,p:"violent exotherm",t:"Acid with caustic",
+  w:"Neutralization releases enough heat to spatter concentrated material. Separate cabinets, or at minimum separate secondary containment."},
+ {a:"acid_min",b:"cyanide",sev:3,p:"HCN",t:"Acid with cyanide",
+  w:"Any acid liberates hydrogen cyanide from cyanide salts. This is the pairing that kills people in labs."},
+ {a:"acid_min",b:"sulfide",sev:3,p:"H₂S",t:"Acid with sulfide",
+  w:"Hydrogen sulfide is generated immediately; it deadens the sense of smell before it reaches lethal concentration."},
+ {a:"acid_min",b:"azide",sev:3,p:"HN₃",t:"Acid with azide",
+  w:"Hydrazoic acid is volatile, toxic, and explosive."},
+ {a:"acid_min",b:"alkali_metal",sev:3,p:"H₂",t:"Acid with active metal",
+  w:"Hydrogen evolution with heat — the mixture ignites itself in a closed space."},
+ {a:"acid_min",b:"water_react",sev:3,p:"HCl / exotherm",t:"Aqueous acid with water-reactive material",
+  w:"The water content alone drives a violent reaction."},
+ {a:"acid_min",b:"base_org",sev:2,p:"exotherm",t:"Acid with amine",
+  w:"Exothermic salt formation; contain and separate."},
+ {a:"acid_min",b:"acid_org",sev:1,p:"—",t:"Mineral acid with organic acid",
+  w:"Generally storable together in a corrosives cabinet, but keep organic acids away from oxidizing acids and treat them as combustible."},
+
+ {a:"acid_org",b:"base_strong",sev:2,p:"exotherm",t:"Organic acid with caustic",
+  w:"Neutralization exotherm; glacial acetic acid is also flammable."},
+
+ {a:"base_strong",b:"halo_solv",sev:3,p:"carbene / exotherm",t:"Strong base with halogenated solvent",
+  w:"Dichloromethane or chloroform with a strong base runs away exothermically and generates dichlorocarbene; chloroform plus acetone plus base is a documented explosion."},
+ {a:"base_strong",b:"alkali_metal",sev:2,p:"H₂",t:"Caustic with amphoteric metal",
+  w:"Aluminum and zinc dissolve in caustic with hydrogen evolution."},
+ {a:"base_strong",b:"water_react",sev:3,p:"exotherm",t:"Aqueous caustic with water-reactive material",
+  w:"Water content drives the reaction regardless of pH."},
+ {a:"base_strong",b:"metal_salt",sev:1,p:"precipitate",t:"Caustic with metal salt",
+  w:"Metal hydroxide precipitation; relevant mostly for waste-stream planning."},
+
+ {a:"alkali_metal",b:"halo_solv",sev:3,p:"detonation",t:"Alkali metal with halogenated solvent",
+  w:"Sodium or potassium with carbon tetrachloride, chloroform, or dichloromethane is shock-sensitive and has caused fatalities. Never quench alkali metals in halogenated solvent."},
+ {a:"alkali_metal",b:"water",sev:3,p:"H₂ + fire",t:"Active metal with water",
+  w:"Hydrogen evolution with enough heat to ignite it."},
+ {a:"alkali_metal",b:"acid_org",sev:3,p:"H₂",t:"Active metal with organic acid",
+  w:"Hydrogen evolution; alcohols and acids both attack alkali metals."},
+
+ {a:"water_react",b:"water",sev:3,p:"exotherm / gas",t:"Water-reactive material with water",
+  w:"Includes ambient humidity, wet glassware, and shared containment with aqueous waste."},
+ {a:"water_react",b:"flam_org",sev:1,p:"—",t:"Water-reactive with flammable",
+  w:"Compatible in principle, but confirm the solvent is dry — trace water is the failure mode."},
+
+ {a:"pyro",b:"water",sev:3,p:"ignition",t:"Pyrophoric with water",
+  w:"Immediate ignition on contact with water or moist air."},
+ {a:"pyro",b:"flam_org",sev:2,p:"fire load",t:"Pyrophoric with flammable",
+  w:"If the pyrophoric ignites, a co-located flammable turns it into a room fire. Store the pyrophoric on its own."},
+ {a:"pyro",b:"halo_solv",sev:3,p:"violent reaction",t:"Pyrophoric with halogenated solvent",
+  w:"Organolithiums and metal alkyls react violently with halogenated solvents."},
+
+ {a:"halogen",b:"flam_org",sev:3,p:"ignition",t:"Halogen with organic",
+  w:"Halogenation is exothermic and can ignite the organic."},
+ {a:"halogen",b:"ammonia",sev:3,p:"NCl₃ / NI₃",t:"Halogen with ammonia",
+  w:"Nitrogen trihalides are contact-explosive."},
+ {a:"halogen",b:"red",sev:3,p:"runaway",t:"Halogen with reducing agent",
+  w:"Direct redox pair."},
+ {a:"halogen",b:"alkali_metal",sev:3,p:"ignition",t:"Halogen with active metal",
+  w:"Direct combination, often violent."},
+
+ {a:"azide",b:"metal_salt",sev:3,p:"metal azide",t:"Azide with heavy metal",
+  w:"Lead, copper, and silver azides are primary explosives sensitive to friction. This is why azide solutions never go down a metal drain line."},
+ {a:"azide",b:"halo_solv",sev:3,p:"diazidomethane",t:"Azide with halogenated solvent",
+  w:"Sodium azide with dichloromethane forms diazidomethane, which detonates unpredictably. It shows up in waste containers more often than in reactions."},
+ {a:"azide",b:"ox",sev:3,p:"explosion",t:"Azide with oxidizer",
+  w:"Energetic and unpredictable."},
+
+ {a:"cyanide",b:"water",sev:2,p:"HCN",t:"Cyanide with water",
+  w:"Cyanide salts hydrolyze in moist air to release HCN. Keep dry and sealed."},
+
+ {a:"shock",b:"metal_salt",sev:3,p:"metal picrate",t:"Shock-sensitive material with metal",
+  w:"Picric acid forms picrate salts with metal caps, spatulas, and shelving — friction-sensitive."},
+ {a:"shock",b:"acid_min",sev:3,p:"sensitization",t:"Shock-sensitive material with acid",
+  w:"Acid contact can sensitize or destabilize the material further."},
+ {a:"shock",b:"ox",sev:3,p:"detonation",t:"Shock-sensitive material with oxidizer",
+  w:"Do not co-locate under any quantity."},
+
+ {a:"gas_flam",b:"gas_ox",sev:3,p:"fire",t:"Flammable gas cylinder with oxidizing gas cylinder",
+  w:"Standard segregation is 20 ft, or a non-combustible barrier at least 5 ft high with a half-hour fire rating."},
+ {a:"gas_flam",b:"ox",sev:3,p:"fire",t:"Flammable gas with oxidizer",
+  w:"Keep cylinders away from solid and liquid oxidizers as well as oxidizing gases."},
+ {a:"gas_ox",b:"flam_org",sev:3,p:"fire",t:"Oxidizing gas with combustible",
+  w:"Oxygen enrichment lowers the ignition energy of everything nearby, including cabinet materials and regulator grease."},
+
+ {a:"ether_perox",b:"acid_min",sev:2,p:"peroxide formation",t:"Peroxide former with acid",
+  w:"Acid accelerates peroxide formation and can trigger violent decomposition of accumulated peroxide."},
+
+ {a:"carbonate",b:"acid_min",sev:2,p:"CO₂ pressure",t:"Carbonate with acid",
+  w:"Rapid CO₂ evolution. In a capped waste jug or a closed spill tray this ruptures the container — one of the most common non-reactive failures in a lab."},
+ {a:"carbonate",b:"acid_ox",sev:2,p:"CO₂ pressure",t:"Carbonate with oxidizing acid",
+  w:"Gas evolution plus the oxidizing acid's own hazards; vent and add slowly if neutralizing deliberately."},
+ {a:"carbonate",b:"acid_org",sev:2,p:"CO₂ pressure",t:"Carbonate with organic acid",
+  w:"Effervescence is mild at the bench and dangerous in a sealed container."},
+ {a:"metal_salt",b:"red",sev:1,p:"—",t:"Metal salt with reducing agent",
+  w:"Reduction to free metal; usually a waste-characterization issue rather than a storage hazard."}
+];
+
+/* ============================================================
+   NAMED PAIR OVERRIDES — specific, well-documented combinations
+   ============================================================ */
+const PAIRS = [
+ {a:"Sodium hypochlorite (bleach)",b:"Ammonium hydroxide",sev:3,p:"chloramine gas",t:"Bleach with ammonia",
+  w:"Monochloramine and dichloramine off-gas immediately; in a closed cabinet the vapors alone are enough."},
+ {a:"Sodium hypochlorite (bleach)",b:"Hydrochloric acid",sev:3,p:"Cl₂",t:"Bleach with acid",
+  w:"Chlorine gas released at once. Applies to any acid, including acetic acid in a shared spill tray."},
+ {a:"Hydrogen peroxide",b:"Acetone",sev:3,p:"acetone peroxide",t:"Peroxide with ketone",
+  w:"Under acidic conditions this forms triacetone triperoxide, a primary explosive. It has been produced accidentally in waste containers."},
+ {a:"Nitric acid",b:"Acetic anhydride",sev:3,p:"detonation",t:"Nitric acid with acetic anhydride",
+  w:"Forms acetyl nitrate. Documented laboratory detonations."},
+ {a:"Nitric acid",b:"Ethanol",sev:3,p:"ethyl nitrate",t:"Nitric acid with alcohol",
+  w:"Nitrate ester formation with a violent exotherm."},
+ {a:"Perchloric acid",b:"Paper / cellulose / sawdust",sev:3,p:"perchlorate ester",t:"Perchloric acid with cellulose",
+  w:"Cellulose perchlorate is friction-sensitive. Never use paper towels or wooden shelving with perchloric acid."},
+ {a:"Sodium azide",b:"Copper metal / brass",sev:3,p:"copper azide",t:"Azide with copper plumbing",
+  w:"Copper azide accumulates in drain traps and detonates on plumbing work."},
+ {a:"Sodium azide",b:"Lead acetate",sev:3,p:"lead azide",t:"Azide with lead",
+  w:"Lead azide is a primary explosive."},
+ {a:"Sodium azide",b:"Dichloromethane",sev:3,p:"diazidomethane",t:"Azide with dichloromethane",
+  w:"Forms diazidomethane, which detonates without warning. Common in mixed halogenated waste."},
+ {a:"Potassium permanganate",b:"Glycerol",sev:3,p:"ignition",t:"Permanganate with glycerol",
+  w:"Ignites spontaneously after a short induction period."},
+ {a:"Chloroform",b:"Acetone",sev:2,p:"exotherm",t:"Chloroform with acetone",
+  w:"Safe alone, but with a trace of base the condensation runs away. Documented laboratory explosion."},
+ {a:"Silver nitrate",b:"Ammonium hydroxide",sev:3,p:"silver nitride",t:"Silver nitrate with ammonia",
+  w:"Tollens' reagent left standing deposits silver nitride, which is contact-explosive. Never store the mixture."},
+ {a:"Mercury (elemental)",b:"Aluminum powder",sev:3,p:"amalgam",t:"Mercury with aluminum",
+  w:"Amalgamation destroys aluminum structures and defeats the oxide layer."},
+ {a:"Hydrogen peroxide",b:"Copper sulfate",sev:2,p:"O₂ pressure",t:"Peroxide with copper salt",
+  w:"Catalytic decomposition pressurizes closed containers — a common cause of ruptured waste jugs."},
+ {a:"Picric acid",b:"Copper metal / brass",sev:3,p:"copper picrate",t:"Picric acid with metal",
+  w:"Metal picrates form on caps, spatulas, and shelf brackets and are friction-sensitive."},
+ {a:"Hydrofluoric acid",b:"Calcium hydroxide",sev:1,p:"CaF₂",t:"HF with calcium",
+  w:"This is the intended neutralization pathway, not an incompatibility — but store the calcium gluconate or hydroxide outside the acid cabinet so it stays reachable during a spill."},
+ {a:"Sodium metal",b:"Carbon tetrachloride",sev:3,p:"detonation",t:"Sodium with carbon tetrachloride",
+  w:"Shock-sensitive mixture. Never use halogenated solvent on an alkali metal fire either."},
+ {a:"Calcium hypochlorite",b:"Ethanol",sev:3,p:"ignition",t:"Hypochlorite solid with alcohol",
+  w:"Solid hypochlorite ignites alcohols on contact."},
+ {a:"Guanidinium thiocyanate",b:"Sodium hypochlorite (bleach)",sev:3,p:"HCN / cyanogen chloride",t:"Thiocyanate lysis buffer with bleach",
+  w:"Bleaching TRIzol or GITC lysate to decontaminate it releases cyanide gas. This kills people who are trying to be careful — never bleach guanidinium waste."},
+ {a:"Urea",b:"Sodium hypochlorite (bleach)",sev:3,p:"NCl₃",t:"Urea with bleach",
+  w:"Nitrogen trichloride, which is contact-explosive and a severe respiratory irritant."},
+ {a:"Sodium nitrite",b:"Diethylamine",sev:3,p:"nitrosamine",t:"Nitrite with secondary amine",
+  w:"Forms N-nitrosamines, which are potent carcinogens. Applies to any secondary amine under acidic conditions."},
+ {a:"Ammonium persulfate",b:"TEMED",sev:2,cap:2,p:"polymerization",t:"APS with TEMED — the intended pair",
+  w:"This is the gel polymerization reaction, not an accident. Still store the dry persulfate away from the TEMED bottle and other organics: as a solid it is an oxidizer."},
+ {a:"Dimethyl sulfoxide",b:"Thionyl chloride",sev:3,p:"runaway",t:"DMSO with acyl or sulfonyl chloride",
+  w:"DMSO decomposes exothermically with acid chlorides and strong acids; documented as a violent runaway on scale."}
+];
+
+/* ============================================================
+   SELF-FLAGS — standing notes on a single material
+   ============================================================ */
+const SELF = {
+  ether_perox:{t:"Peroxide former present",w:"Date on receipt and on opening, test before distillation or evaporation, and dispose on schedule rather than by inventory need."},
+  shock:{t:"Shock-sensitive material present",w:"Check hydration state, quantity, cap condition, and the tracked-inventory entry. Do not move a dried container."},
+  pyro:{t:"Pyrophoric present",w:"Confirm inert-atmosphere technique, buddy system, and a Class D extinguisher or dry sand — not water or CO₂."},
+  cyanide:{t:"Cyanide present",w:"Confirm locked storage, a cyanide-free acid waste stream, and that the antidote and response plan are documented."}
+};
+
+/* ============================================================
+   Segregation Check — ENGINE + UI
+   ------------------------------------------------------------
+   Program logic. You should rarely need to touch this file to
+   add chemicals, rules, or hazard classes — those live in data.js.
+   ============================================================ */
+/* ============================================================
+   ENGINE
+   ============================================================ */
+const state = {A:null,B:null,manA:new Set(),manB:new Set(),manual:false,last:null};
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,"");
+
+function search(q){
+  const n = norm(q);
+  if(!n) return [];
+  const scored = [];
+  for(const c of CHEMS){
+    const names = [c.n, ...c.s];
+    let best = -1;
+    for(const nm of names){
+      const x = norm(nm);
+      if(x === n) best = Math.max(best,100);
+      else if(x.startsWith(n)) best = Math.max(best,70);
+      else if(x.includes(n)) best = Math.max(best,40);
+    }
+    if(best > 0) scored.push({c,best});
+  }
+  scored.sort((x,y)=> y.best - x.best || x.c.n.length - y.c.n.length);
+  return scored.slice(0,8).map(x=>x.c);
+}
+
+function classesFor(side){
+  if(state.manual) return [...(side==="A"?state.manA:state.manB)];
+  const c = side==="A"?state.A:state.B;
+  return c ? c.g : [];
+}
+function nameFor(side){
+  if(state.manual){
+    const typed = (document.getElementById("in"+side).value||"").trim();
+    if(typed) return typed;
+    const set = side==="A"?state.manA:state.manB;
+    return set.size ? [...set].map(g=>G[g].label).join(" + ") : null;
+  }
+  const c = side==="A"?state.A:state.B;
+  return c ? c.n : null;
+}
+
+function chemName(side){
+  if(state.manual) return null;
+  const c = side==="A"?state.A:state.B;
+  return c ? c.n : null;
+}
+
+function computeFindings(gA,gB,nA,nB){
+  const findings = [];
+  const seen = new Set();
+  const push = f => { const k = f.t + f.w; if(!seen.has(k)){ seen.add(k); findings.push(f);} };
+
+  if(nA && nB){
+    for(const p of PAIRS){
+      if((p.a===nA && p.b===nB) || (p.b===nA && p.a===nB)){
+        push({sev:p.sev,t:p.t,w:p.w,p:p.p,named:true,cap:p.cap});
+      }
+    }
+  }
+  for(const r of RULES){
+    const hit = (gA.includes(r.a) && gB.includes(r.b)) || (gA.includes(r.b) && gB.includes(r.a));
+    if(hit) push({sev:r.sev,t:r.t,w:r.w,p:r.p,named:false});
+  }
+  findings.sort((x,y)=> y.sev - x.sev || (y.named?1:0) - (x.named?1:0));
+  let eff = findings.length ? findings[0].sev : 0;
+  const capped = findings.find(f => f.cap != null);
+  if(capped){
+    eff = Math.min(eff, capped.cap);
+    findings.splice(findings.indexOf(capped),1);
+    findings.unshift(capped);
+  }
+  findings.top = eff;
+  return findings;
+}
+
+/* everything in the list that conflicts with one material, bucketed by reason */
+function conflictList(gs,nm){
+  if(!gs || !gs.length) return [];
+  const buckets = new Map();
+  let total = 0;
+  for(const c of CHEMS){
+    if(nm && c.n === nm) continue;
+    if(!c.g.length) continue;
+    const f = computeFindings(gs,c.g,nm,c.n);
+    if(!f.length || f.top < 2) continue;
+    const top = f[0];
+    if(!buckets.has(top.t)) buckets.set(top.t,{t:top.t,sev:f.top,p:top.p,names:[]});
+    buckets.get(top.t).names.push(c.n);
+    total++;
+  }
+  const out = [...buckets.values()];
+  out.forEach(b=>b.names.sort((x,y)=>x.localeCompare(y)));
+  out.sort((a,b)=> b.sev - a.sev || b.names.length - a.names.length);
+  out.total = total;
+  return out;
+}
+
+function conflictBlock(label,list){
+  if(!list.length) return `<section class="block"><h2>Also separate from — ${esc(label)}</h2>
+    <div class="finding s1"><h3>Nothing else in the list conflicts</h3>
+    <p>No other material in the database triggers a rule against this one. That reflects the database, not the whole stockroom.</p></div></section>`;
+  let html = `<section class="block"><h2>Also separate from — ${esc(label)} <span class="count">${list.total} materials</span></h2>`;
+  for(const b of list){
+    const head = b.names.slice(0,10), rest = b.names.slice(10);
+    html += `<div class="cgroup s${b.sev}">
+      <h3>${esc(b.t)}${b.p!=="—"?` <em>· ${esc(b.p)}</em>`:""}</h3>
+      <p class="names">${head.map(esc).join(", ")}${rest.length?`<span class="rest" hidden>, ${rest.map(esc).join(", ")}</span><button class="more" type="button"> +${rest.length} more</button>`:""}</p>
+    </div>`;
+  }
+  return html + `</section>`;
+}
+
+function storeBlock(entries){
+  const rows = [];
+  for(const e of entries){
+    const uniq = (e.gs||[]).filter(g=>G[g] && G[g].store !== "—");
+    if(e.nm && uniq.length) rows.push({nm:e.nm,txt:G[uniq[0]].store,gs:e.gs});
+  }
+  if(!rows.length) return "";
+  let html = `<section class="block"><h2>Storage</h2><ul class="store">`;
+  for(const s of rows){
+    html += `<li><strong>${esc(s.nm)}</strong><span>${esc(s.txt)}</span>
+      <div class="classes">${s.gs.map(g=>`<span class="tag">${esc(G[g]?G[g].label:g)}</span>`).join("")}</div></li>`;
+  }
+  return html + `</ul></section>`;
+}
+
+function evaluate(){
+  const gA = classesFor("A"), gB = classesFor("B");
+  const nA = nameFor("A"), nB = nameFor("B");
+  if(!nA && !nB) return null;
+
+  if(!nA || !nB){
+    const side = nA ? "A" : "B";
+    const gs = nA ? gA : gB;
+    return {partial:true, side, label:(nA||nB), gs, conflicts:conflictList(gs,chemName(side))};
+  }
+
+  const findings = computeFindings(gA,gB,chemName("A"),chemName("B"));
+
+  const notes = [];
+  for(const g of new Set([...gA,...gB])) if(SELF[g]) notes.push(SELF[g]);
+
+  const same = !state.manual && state.A && state.B && state.A.n === state.B.n;
+  const known = gA.length > 0 && gB.length > 0;
+  const top = findings.length ? findings.top : (known ? 1 : 0);
+
+  return {nA,nB,gA,gB,findings,notes,top,same,known,
+          cA:conflictList(gA,chemName("A")), cB:conflictList(gB,chemName("B"))};
+}
+
+const VERDICT = {
+  3:{word:"Separate",code:"Incompatible — do not co-store"},
+  2:{word:"Caution",code:"Conditionally compatible"},
+  1:{word:"No conflict",code:"No known reactive conflict"},
+  0:{word:"Unrated",code:"Insufficient class data"}
+};
+
+function render(){
+  const box = document.getElementById("result");
+  const r = evaluate();
+  document.getElementById("copyNote").hidden = !r;
+
+  if(!r){
+    box.innerHTML = '<div class="empty">Enter a chemical to see what it must be kept away from, or fill both sides to check a pairing.</div>';
+    return;
+  }
+
+  if(r.partial){
+    box.innerHTML = `<div class="solo">
+        <div class="solo-name">${esc(r.label)}</div>
+        <div class="classes">${r.gs.map(g=>`<span class="tag">${esc(G[g]?G[g].label:g)}</span>`).join("")}</div>
+      </div>`
+      + (r.gs.length
+          ? conflictBlock(r.label,r.conflicts)
+          : `<section class="block"><h2>No hazard classes yet</h2>
+             <div class="finding s2"><h3>Set the classes for ${esc(r.label)}</h3>
+             <p>This one isn't in the database. Open <strong>Set classes manually</strong> and tick what applies — SDS section 10 lists incompatible materials, section 2 gives the hazard classification. The check runs as soon as one class is set.</p></div></section>`)
+      + storeBlock([{nm:r.label,gs:r.gs}]);
+    return;
+  }
+
+  state.last = r;
+  const v = VERDICT[r.top];
+  const product = r.findings.length && r.findings[0].p !== "—" ? r.findings[0].p : (r.top>=1 ? "no reaction expected" : "unknown");
+  const crossed = r.top <= 1;
+
+  const arrow = `
+    <div class="arrow">
+      <div class="over">${esc(product)}</div>
+      <svg width="104" height="16" viewBox="0 0 104 16" aria-hidden="true">
+        <line x1="2" y1="8" x2="96" y2="8" stroke="currentColor" stroke-width="1.5"/>
+        <polyline points="88,3 98,8 88,13" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        ${crossed ? '<line x1="43" y1="1" x2="57" y2="15" stroke="currentColor" stroke-width="1.5"/>' : ''}
+      </svg>
+      <div class="under">${r.top===3?"do not mix":r.top===2?"conditions apply":r.top===1?"screened":"unrated"}</div>
+    </div>`;
+
+  let html = `
+    <div class="slab sev-${r.top}">
+      <div class="scheme">
+        <div class="reagent">${esc(r.nA)}</div>
+        <div class="plus">+</div>
+        <div class="reagent">${esc(r.nB)}</div>
+        ${arrow}
+      </div>
+      <div class="banner">
+        <div class="word">${v.word}</div>
+        <div class="code">${v.code}</div>
+      </div>
+    </div>`;
+
+  if(r.same){
+    html += `<div class="block"><h2>Note</h2><div class="finding s1"><h3>Same material on both sides</h3><p>Pick a second, different material to run a pairing.</p></div></div>`;
+  }
+
+  if(r.findings.length){
+    html += `<section class="block"><h2>Findings</h2>`;
+    for(const f of r.findings){
+      html += `<div class="finding s${f.sev}">
+        <h3>${esc(f.t)}</h3>
+        <p>${esc(f.w)}</p>
+        <span class="tagline">${f.named ? "Named pair" : "Class rule"}${f.p!=="—" ? " · "+esc(f.p) : ""}</span>
+      </div>`;
+    }
+    html += `</section>`;
+  } else if(r.known){
+    html += `<section class="block"><h2>Findings</h2>
+      <div class="finding s1"><h3>No reactive conflict in the rule set</h3>
+      <p>These classes carry no listed incompatibility. Still confirm container material, ventilation, and whether either one needs its own containment for reasons other than reactivity.</p></div>
+    </section>`;
+  } else {
+    html += `<section class="block"><h2>Findings</h2>
+      <div class="finding"><h3>Not enough class data</h3>
+      <p>At least one side has no hazard classes assigned. Switch to manual classes and set them from the SDS section 10.</p></div>
+    </section>`;
+  }
+
+  if(r.notes.length){
+    html += `<section class="block"><h2>Standing flags</h2>`;
+    for(const n of r.notes){
+      html += `<div class="finding s2"><h3>${esc(n.t)}</h3><p>${esc(n.w)}</p></div>`;
+    }
+    html += `</section>`;
+  }
+
+  html += storeBlock([{nm:r.nA,gs:r.gA},{nm:r.nB,gs:r.gB}]);
+  html += conflictBlock(r.nA,r.cA);
+  if(!r.same) html += conflictBlock(r.nB,r.cB);
+
+  box.innerHTML = html;
+  logIt(r);
+}
+
+function logIt(r){
+  if(!r.nA || !r.nB || r.same) return;
+  const key = [r.nA,r.nB].sort().join(" ~ ");
+  if(!logIt.seen) logIt.seen = new Set();
+  if(logIt.seen.has(key)) return;
+  logIt.seen.add(key);
+  const ul = document.getElementById("log");
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="dot d${r.top}"></span><span>${esc(r.nA)} + ${esc(r.nB)} — ${VERDICT[r.top].word.toLowerCase()}</span>`;
+  ul.prepend(li);
+  document.getElementById("logBlock").hidden = false;
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---------- input wiring ---------- */
+function wire(side){
+  const input = document.getElementById("in"+side);
+  const menu = document.getElementById("menu"+side);
+  const clr = document.querySelector(`[data-clear="${side}"]`);
+
+  const close = ()=>{menu.hidden = true; menu.innerHTML = "";};
+
+  input.addEventListener("input",()=>{
+    state[side] = null;
+    clr.hidden = !input.value;
+    const res = search(input.value);
+    if(!input.value){ close(); render(); return; }
+    menu.innerHTML = res.length
+      ? res.map(c=>`<button class="opt" data-name="${esc(c.n)}">${esc(c.n)}${c.s.length?`<span class="syn">${esc(c.s.join(" · "))}</span>`:""}</button>`).join("")
+      : `<div class="opt miss">Not in the list — <button class="linkish" type="button" data-tomanual="${side}">set its hazard classes from the SDS</button></div>`;
+    menu.hidden = false;
+    render();
+  });
+
+  menu.addEventListener("click",e=>{
+    const m = e.target.closest("[data-tomanual]");
+    if(m){
+      if(!state.manual){
+        state.manual = true;
+        document.getElementById("manualToggle").setAttribute("aria-pressed","true");
+        document.getElementById("manual").hidden = false;
+        buildChips();
+      }
+      close();
+      render();
+      document.getElementById("manual").scrollIntoView({block:"nearest"});
+      return;
+    }
+    const b = e.target.closest(".opt[data-name]");
+    if(!b) return;
+    const c = CHEMS.find(x=>x.n === b.dataset.name);
+    state[side] = c;
+    if(state.manual){
+      const set = side==="A"?state.manA:state.manB;
+      set.clear(); c.g.forEach(g=>set.add(g));
+      buildChips();
+    }
+    input.value = c.n;
+    clr.hidden = false;
+    close();
+    render();
+  });
+
+  input.addEventListener("keydown",e=>{
+    if(e.key === "Escape") close();
+    if(e.key === "Enter"){
+      const first = menu.querySelector(".opt[data-name]");
+      if(first){ first.click(); e.preventDefault(); }
+    }
+  });
+
+  clr.addEventListener("click",()=>{
+    input.value = ""; state[side] = null; clr.hidden = true; close(); render(); input.focus();
+  });
+
+  document.addEventListener("click",e=>{
+    if(!e.target.closest("#slot"+side)) close();
+  });
+}
+wire("A"); wire("B");
+
+document.getElementById("swap").addEventListener("click",()=>{
+  const a = document.getElementById("inA"), b = document.getElementById("inB");
+  [a.value,b.value] = [b.value,a.value];
+  [state.A,state.B] = [state.B,state.A];
+  [state.manA,state.manB] = [state.manB,state.manA];
+  document.querySelector('[data-clear="A"]').hidden = !a.value;
+  document.querySelector('[data-clear="B"]').hidden = !b.value;
+  buildChips(); render();
+});
+
+/* ---------- manual classes ---------- */
+function buildChips(){
+  for(const side of ["A","B"]){
+    const host = document.getElementById("chips"+side);
+    const set = side==="A"?state.manA:state.manB;
+    host.innerHTML = Object.entries(G)
+      .filter(([k])=>k!=="water" || true)
+      .map(([k,v])=>`<button class="chip-btn" data-side="${side}" data-g="${k}" aria-pressed="${set.has(k)}">${esc(v.label)}</button>`).join("");
+  }
+}
+document.getElementById("manual").addEventListener("click",e=>{
+  const b = e.target.closest(".chip-btn");
+  if(!b) return;
+  const set = b.dataset.side==="A"?state.manA:state.manB;
+  set.has(b.dataset.g) ? set.delete(b.dataset.g) : set.add(b.dataset.g);
+  b.setAttribute("aria-pressed", set.has(b.dataset.g));
+  render();
+});
+document.getElementById("manualToggle").addEventListener("click",e=>{
+  state.manual = !state.manual;
+  e.currentTarget.setAttribute("aria-pressed", state.manual);
+  document.getElementById("manual").hidden = !state.manual;
+  if(state.manual) buildChips();
+  render();
+});
+
+/* ---------- expand long lists ---------- */
+document.getElementById("result").addEventListener("click",e=>{
+  const b = e.target.closest("button.more");
+  if(!b) return;
+  const rest = b.parentElement.querySelector(".rest");
+  if(rest) rest.hidden = false;
+  b.remove();
+});
+
+/* ---------- copy note ---------- */
+document.getElementById("copyNote").addEventListener("click",async e=>{
+  const r = state.last; if(!r) return;
+  const lines = [
+    `${r.nA} + ${r.nB} — ${VERDICT[r.top].code}`,
+    ...r.findings.map(f=>`• ${f.t}: ${f.w}`),
+    ...r.notes.map(n=>`• ${n.t}: ${n.w}`)
+  ];
+  try{
+    await navigator.clipboard.writeText(lines.join("\n"));
+    const btn = e.currentTarget, old = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(()=>btn.textContent = old, 1400);
+  }catch{
+    const btn = e.currentTarget, old = btn.textContent;
+    btn.textContent = "Copy blocked";
+    setTimeout(()=>btn.textContent = old, 1600);
+  }
+});
+
+buildChips();
+render();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+/* ============================================================
+   SELF-TEST
+   Open the app with ?selftest at the end of the URL to check the
+   data files for structural errors and known-answer regressions.
+   No tooling needed — it runs in the browser, including on a phone.
+   ============================================================ */
+function selfTest(){
+  const results = [];
+  const ok = (name, cond, detail) => results.push({name, pass: !!cond, detail: detail || ""});
+
+  // --- structural integrity ---
+  const classIds = new Set(Object.keys(G));
+  const badClass = [];
+  CHEMS.forEach(c => c.g.forEach(g => { if(!classIds.has(g)) badClass.push(c.n + " → " + g); }));
+  ok("Every chemical uses a defined hazard class", !badClass.length, badClass.join(", "));
+
+  const badRule = [];
+  RULES.forEach(r => { if(!classIds.has(r.a)) badRule.push(r.a); if(!classIds.has(r.b)) badRule.push(r.b); });
+  ok("Every rule references a defined class", !badRule.length, [...new Set(badRule)].join(", "));
+
+  const names = new Set(CHEMS.map(c => c.n));
+  const badPair = [];
+  PAIRS.forEach(p => { if(!names.has(p.a)) badPair.push(p.a); if(!names.has(p.b)) badPair.push(p.b); });
+  ok("Every named pair matches a chemical name exactly", !badPair.length, [...new Set(badPair)].join(", "));
+
+  const dupes = CHEMS.map(c => c.n).filter((n,i,a) => a.indexOf(n) !== i);
+  ok("No duplicate chemical names", !dupes.length, [...new Set(dupes)].join(", "));
+
+  const unclassed = CHEMS.filter(c => !c.g.length).map(c => c.n);
+  ok("Every chemical has at least one class", !unclassed.length, unclassed.join(", "));
+
+  const noStore = Object.entries(G).filter(([k,v]) => !v.store).map(([k]) => k);
+  ok("Every class has storage guidance", !noStore.length, noStore.join(", "));
+
+  // --- known-answer regressions ---
+  const find = n => CHEMS.find(c => c.n === n || c.s.includes(n));
+  const verdictOf = (a,b) => {
+    const A = find(a), B = find(b);
+    if(!A || !B) return "missing";
+    const f = computeFindings(A.g, B.g, A.n, B.n);
+    return f.length ? f.top : ((A.g.length && B.g.length) ? 1 : 0);
+  };
+  const expect = (a,b,want) => ok(`${a} + ${b} → ${VERDICT[want].word.toLowerCase()}`, verdictOf(a,b) === want, "got " + verdictOf(a,b));
+
+  expect("Sodium cyanide","Hydrochloric acid",3);
+  expect("Sodium azide","Copper metal / brass",3);
+  expect("Sodium azide","Dichloromethane",3);
+  expect("Sodium hypochlorite (bleach)","Ammonium hydroxide",3);
+  expect("Sodium metal","Carbon tetrachloride",3);
+  expect("Nitric acid","Acetone",3);
+  expect("Guanidinium thiocyanate","Sodium hypochlorite (bleach)",3);
+  expect("Hydrogen peroxide","Acetone",3);
+  expect("Ammonium persulfate","TEMED",2);
+  expect("Sodium bicarbonate","Hydrochloric acid",2);
+  expect("Magnesium chloride","Nitric acid",1);
+  expect("Potassium chloride","Sodium chloride",1);
+
+  ok("Formula search finds MgCl2", (search("MgCl2")[0]||{}).n === "Magnesium chloride");
+  ok("Formula search finds K2CO3", (search("K2CO3")[0]||{}).n === "Potassium carbonate");
+  ok("Sodium azide has a conflict list", conflictList(find("Sodium azide").g,"Sodium azide").length > 0);
+  ok("Inert salts have an empty conflict list", conflictList(find("Magnesium chloride").g,"Magnesium chloride").length === 0);
+
+  const failed = results.filter(r => !r.pass);
+  document.body.innerHTML = `<div class="wrap" style="padding-top:24px">
+    <div class="slab sev-${failed.length ? 3 : 1}">
+      <div class="banner"><div class="word">${failed.length ? failed.length + " failed" : "All passed"}</div>
+      <div class="code">${results.length} checks · data ${DATA_VERSION}</div></div>
+    </div>
+    <section class="block"><h2>Results</h2>
+      ${results.map(r => `<div class="finding ${r.pass ? "s1" : "s3"}">
+        <h3>${r.pass ? "PASS" : "FAIL"} — ${esc(r.name)}</h3>
+        ${r.detail ? `<p>${esc(r.detail)}</p>` : ""}</div>`).join("")}
+    </section>
+    <p class="foot">Remove <strong>?selftest</strong> from the address to go back to the tool.</p>
+  </div>`;
+}
+
+if(location.search.indexOf("selftest") !== -1){ selfTest(); }
+
+</script>
+</body>
+</html>
