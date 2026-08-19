@@ -1,0 +1,16 @@
+{
+  "name": "Segregation Check",
+  "short_name": "SegCheck",
+  "description": "Two-chemical incompatibility lookup for laboratory inspections",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EFF1F0",
+  "theme_color": "#161A1D",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
